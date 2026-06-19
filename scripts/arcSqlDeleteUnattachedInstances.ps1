@@ -58,10 +58,12 @@ $missingChildInstanceIds = [System.Collections.ArrayList]::new($sqlInstances.Cou
 [int]$missingCount = 0
 for($i = 0; $i -lt $sqlInstances.Count; $i++) {
     $sqlInstance = $sqlInstances[$i]
-    $id = $sqlInstance.Properties.containerResourceId.Trim().TrimEnd('/')
-    if (-not $machineIdSet.Contains($id)) {
-        [void]$missingChildInstanceIds.Add($sqlInstance.ResourceId)
-        $missingCount++
+    if (-not [string]::IsNullOrEmpty($sqlInstance.Properties.containerResourceId)) {
+        $id = $sqlInstance.Properties.containerResourceId.Trim().TrimEnd('/')
+        if (-not $machineIdSet.Contains($id)) {
+            [void]$missingChildInstanceIds.Add($sqlInstance.ResourceId)
+            $missingCount++
+        }
     }
 }
 
@@ -80,7 +82,7 @@ if ($missingChildInstanceIds.Count -gt 0 -and $deleteUnattachedSqlInstances) {
     Write-Output "[$(Get-Date -Format 'HH:mm:ss yyyy-MM-dd')] Deleting unattached SQL instances"
     for($i = 0; $i -lt $missingChildInstanceIds.Count; $i++) {
         Write-Output "[$(Get-Date -Format 'HH:mm:ss yyyy-MM-dd')] Deleting SQL instance $($missingChildInstanceIds[$i])"
-        #Remove-AzResource -ResourceId $missingChildInstanceIds[$i] -Force
+        Remove-AzResource -ResourceId $missingChildInstanceIds[$i] -Force
     }
 }
 
